@@ -314,8 +314,10 @@ def open_pwm_i2c():
     replace('/boot/hw_intfc.conf', 'intfc:i2c7=off', 'intfc:i2c7=on')
 
 
-conf = {'disk': [], 'idx': mp.Value('d', -1), 'run': mp.Value('d', 1)}
+conf = {'disk': [], 'idx': mp.Value('d', -1), 'run': mp.Value('d', 1), 'show': mp.Value('d', 1)}
 conf.update(read_conf())
+if "displayoff" in conf['key'].values():
+    conf['show'].value = 0
 
 
 if __name__ == '__main__':

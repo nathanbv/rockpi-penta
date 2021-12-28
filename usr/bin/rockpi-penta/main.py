@@ -16,6 +16,7 @@ lock = mp.Lock()
 action = {
     'none': lambda: 'nothing',
     'slider': lambda: oled.slider(lock),
+    'displayoff': lambda: oled.turn_off(),
     'switch': lambda: misc.fan_switch(),
     'reboot': lambda: misc.check_call('reboot'),
     'poweroff': lambda: misc.check_call('poweroff'),
