@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import re
-import os
 import sys
-import json
 import time
 import mraa  # pylint: disable=import-error
 import shutil
@@ -12,14 +10,11 @@ from configparser import ConfigParser
 from collections import defaultdict, OrderedDict
 
 cmds = {
-    'blk': "lsblk | awk '{print $1}'",
-    #'up': "echo Uptime: `uptime | sed 's/.*up \\([^,]*\\), .*/\\1/'`",
     'up': "echo Up: $(uptime -p | sed 's/ years,/y/g;s/ year,/y/g;s/ months,/m/g;s/ month,/m/g;s/ weeks,/w/g;s/ week,/w/g;s/ days,/d/g;s/ day,/d/g;s/ hours,/h/g;s/ hour,/h/g;s/ minutes/m/g;s/ minute/m/g' | cut -d ' ' -f2-)",
     'temp': "cat /sys/class/thermal/thermal_zone0/temp",
     'ip': "hostname -I | awk '{printf \"IP %s\", $1}'",
     'cpu': "uptime | awk '{printf \"CPU Load: %.2f\", $(NF-2)}'",
-    'men': "free -m | awk 'NR==2{printf \"Mem: %s/%sMB\", $3,$2}'",
-    'disk': "df -h | awk '$NF==\"/\"{printf \"Disk: %d/%dGB %s\", $3,$2,$5}'"
+    'mem': "free -h | awk 'NR==2 {printf \"Mem: %s/%s\", $3,$2}'"
 }
 
 lv2dc = OrderedDict({
@@ -49,10 +44,6 @@ def check_output(cmd):
 
 def check_call(cmd):
     return subprocess.check_call(cmd, shell=True)
-
-
-def get_blk():
-    conf['disk'] = [x for x in check_output(cmds['blk']).strip().split('\n') if x.startswith('sd')]
 
 
 def get_info(s):
@@ -213,52 +204,55 @@ def get_interface_tx_info(interface):
     return output
 
 
-def delete_disk_partition_number(disk):
-    if "sd" in disk and disk[-1].isdigit():
-        disk = disk[:-1]
-    return disk
-
-
 def get_disk_list(type):
     if len(conf['disk'][type]) == 1 and conf['disk'][type][0] == '':
         return []
 
-    disks = []
-    for x in conf['disk'][type]:
-        cmd = "df -Bg | awk '$6==\"{}\" {{printf \"%s\", $1}}'".format(x)
-        output = check_output(cmd).split('/')[-1]
-        if output != '':
-            disks.append(output)
+    if not 'disks' in conf['disk']:
+        disks = {}
+        for disk_mount in conf['disk'][type]:
+            cmd = "df | awk '$NF==\"" + disk_mount + "\" {printf $1}'"
+            output = check_output(cmd)
+            if output != '':
+                disks[disk_mount] = output
+        conf['disk']['disks'] = disks
 
-    disks.sort()
-    return disks
+    return conf['disk']['disks']
 
 
 def get_disk_temp_info():
     if not conf['disk']['disks_temp']:
         return [(), ()]
-    disks = list(check_output("ls /dev/sd* | grep -E \"[0-9]*$\" | cut -f3 -d'/' | tr -d '0123456789'").split("\n"))
+    disks = set(check_output("ls /dev/sd* | grep -E \"[0-9]*$\" | cut -f3 -d'/' | tr -d '0123456789'").split("\n"))
     disks_temp = {}
     for disk in disks:
-        output = check_output(f"sudo smartctl -A /dev/{disk} -j")
-        object = json.loads(output)
-        disk_temp = object["temperature"]["current"]
+        cmd = "sudo smartctl -A /dev/" + disk + " | awk '$2==\"Temperature_Celsius\" {printf $4}' | awk '$0*=1'"
+        output = check_output(cmd)
         if conf['oled']['f-temp']:
-            disk_temp = "{:.0f}°F".format(disk_temp * 1.8 + 32)
+            disk_temp = "{:.0f}°F".format(int(output) * 1.8 + 32)
         else:
-            disk_temp = "{}°C".format(disk_temp)
+            disk_temp = "{}°C".format(output)
         disks_temp[disk] = disk_temp
     return list(zip(*disks_temp.items()))
 
 
-def get_disk_io_read_info(disk):
-    cmd = "R1=$(cat /sys/block/" + disk + "/stat | awk '{print $3}'); sleep 1; R2=$(cat /sys/block/" + disk + "/stat | awk '{print $3}'); echo | awk -v r1=$R1 -v r2=$R2 '{printf \"R: %.5f MB/s\", (r2 - r1) / 2 / 1024}';"
+def get_disk_block_device(disk):
+    if "sd" in disk and disk[-1].isdigit():
+        disk = disk[:-1]
+    disk = disk.split('/')[-1]
+    return disk
+
+
+def get_disk_io_read_info(disk_dev):
+    disk_blk = get_disk_block_device(disk_dev)
+    cmd = "R1=$(cat /sys/block/" + disk_blk + "/stat | awk '{print $3}'); sleep 1; R2=$(cat /sys/block/" + disk_blk + "/stat | awk '{print $3}'); echo | awk -v r1=$R1 -v r2=$R2 '{printf \"R: %.5f MB/s\", (r2 - r1) / 2 / 1024}';"
     output = check_output(cmd)
     return output
 
 
-def get_disk_io_write_info(disk):
-    cmd = "W1=$(cat /sys/block/" + disk + "/stat | awk '{print $7}'); sleep 1; W2=$(cat /sys/block/" + disk + "/stat | awk '{print $7}'); echo | awk -v w1=$W1 -v w2=$W2 '{printf \"W: %.5f MB/s\", (w2 - w1) / 2 / 1024}';"
+def get_disk_io_write_info(disk_dev):
+    disk_blk = get_disk_block_device(disk_dev)
+    cmd = "W1=$(cat /sys/block/" + disk_blk + "/stat | awk '{print $7}'); sleep 1; W2=$(cat /sys/block/" + disk_blk + "/stat | awk '{print $7}'); echo | awk -v w1=$W1 -v w2=$W2 '{printf \"W: %.5f MB/s\", (w2 - w1) / 2 / 1024}';"
     output = check_output(cmd)
     return output
 
@@ -266,13 +260,13 @@ def get_disk_io_write_info(disk):
 def get_disk_info(cache={}):
     if not cache.get('time') or time.time() - cache['time'] > 30:
         info = {}
-        cmd = "df -h | awk '$NF==\"/\"{printf \"%s\", $5}'"
+        cmd = "df | awk '$NF==\"/\" {printf $5}'"
         info['root'] = check_output(cmd)
-        conf['disk']['disks'] = get_disk_list('space_usage_mnt_points')
-        for x in conf['disk']['disks']:
-            delete_disk_partition_number(x)
-            cmd = "df -Bg | awk '$1==\"/dev/{}\" {{printf \"%s\", $5}}'".format(x)
-            info[x] = check_output(cmd)
+        disks = get_disk_list('space_usage_mnt_points')
+        for disk_mount, disk_dev in disks.items():
+            cmd = "df | awk '$NF==\"" + disk_mount + "\" {printf $5}'"
+            disk_name = disk_mount.split('/')[-1]
+            info[disk_name] = check_output(cmd)
         cache['info'] = list(zip(*info.items()))
         cache['time'] = time.time()
 

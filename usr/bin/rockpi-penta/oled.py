@@ -139,13 +139,11 @@ def put_disk_io_info(pages_len):
     page_index = pages_len
     disks = misc.get_disk_list('io_usage_mnt_points')
 
-    for x in disks:
-        x = misc.delete_disk_partition_number(x)
-
+    for disk_mount, disk_dev in disks:
         pages[page_index] = [
-            {'xy': (0, -2), 'text': 'Disk (' + x + '):', 'fill': 255, 'font': font['11']},
-            {'xy': (0, 10), 'text': misc.get_disk_io_read_info(x), 'fill': 255, 'font': font['11']},
-            {'xy': (0, 21), 'text': misc.get_disk_io_write_info(x), 'fill': 255, 'font': font['11']}
+            {'xy': (0, -2), 'text': 'Disk (' + disk_mount + '):', 'fill': 255, 'font': font['11']},
+            {'xy': (0, 10), 'text': misc.get_disk_io_read_info(disk_dev), 'fill': 255, 'font': font['11']},
+            {'xy': (0, 21), 'text': misc.get_disk_io_write_info(disk_dev), 'fill': 255, 'font': font['11']}
         ]
         page_index = page_index + 1
 
@@ -176,7 +174,7 @@ def gen_pages():
         ],
         1: [
             {'xy': (0, 2), 'text': misc.get_info('cpu'), 'fill': 255, 'font': font['12']},
-            {'xy': (0, 18), 'text': misc.get_info('men'), 'fill': 255, 'font': font['12']},
+            {'xy': (0, 18), 'text': misc.get_info('mem'), 'fill': 255, 'font': font['12']},
         ],
         2: put_disk_info()
     }
