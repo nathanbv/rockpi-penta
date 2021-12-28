@@ -23,13 +23,13 @@ cmds = {
 }
 
 lv2dc = OrderedDict({
-    'lv7': 0, 
-    'lv6': 0.12, 
-    'lv5': 0.25, 
-    'lv4': 0.37, 
-    'lv3': 0.5, 
-    'lv2': 0.62, 
-    'lv1': 0.75, 
+    'lv7': 0,
+    'lv6': 0.12,
+    'lv5': 0.25,
+    'lv4': 0.37,
+    'lv3': 0.5,
+    'lv2': 0.62,
+    'lv1': 0.75,
     'lv0': 1
     })
 
@@ -93,7 +93,7 @@ def read_conf():
             conf['fan']['lv3'] = cfg.getfloat('fan','lv3')
             conf['fan']['lv4'] = cfg.getfloat('fan','lv4')
             conf['fan']['lv5'] = cfg.getfloat('fan','lv5')
-            conf['fan']['lv6'] = cfg.getfloat('fan','lv6')            
+            conf['fan']['lv6'] = cfg.getfloat('fan','lv6')
             conf['fan']['lv7'] = cfg.getfloat('fan','lv7')
     except Exception:
         conf['fan']['lv0'] = 35
@@ -179,6 +179,7 @@ def watch_key(q=None):
     while True:
         q.put(read_key(pattern, size))
 
+
 def get_interface_list():
     if len(conf['network']['interfaces']) == 1 and conf['network']['interfaces'][0] == '':
         return []
@@ -211,10 +212,12 @@ def get_interface_tx_info(interface):
     output = check_output(cmd)
     return output
 
+
 def delete_disk_partition_number(disk):
     if "sd" in disk and disk[-1].isdigit():
         disk = disk[:-1]
     return disk
+
 
 def get_disk_list(type):
     if len(conf['disk'][type]) == 1 and conf['disk'][type][0] == '':
@@ -229,6 +232,7 @@ def get_disk_list(type):
 
     disks.sort()
     return disks
+
 
 def get_disk_temp_info():
     if not conf['disk']['disks_temp']:
@@ -246,6 +250,7 @@ def get_disk_temp_info():
         disks_temp[disk] = disk_temp
     return list(zip(*disks_temp.items()))
 
+
 def get_disk_io_read_info(disk):
     cmd = "R1=$(cat /sys/block/" + disk + "/stat | awk '{print $3}'); sleep 1; R2=$(cat /sys/block/" + disk + "/stat | awk '{print $3}'); echo | awk -v r1=$R1 -v r2=$R2 '{printf \"R: %.5f MB/s\", (r2 - r1) / 2 / 1024}';"
     output = check_output(cmd)
@@ -256,6 +261,7 @@ def get_disk_io_write_info(disk):
     cmd = "W1=$(cat /sys/block/" + disk + "/stat | awk '{print $7}'); sleep 1; W2=$(cat /sys/block/" + disk + "/stat | awk '{print $7}'); echo | awk -v w1=$W1 -v w2=$W2 '{printf \"W: %.5f MB/s\", (w2 - w1) / 2 / 1024}';"
     output = check_output(cmd)
     return output
+
 
 def get_disk_info(cache={}):
     if not cache.get('time') or time.time() - cache['time'] > 30:
