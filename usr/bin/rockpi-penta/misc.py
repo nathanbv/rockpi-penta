@@ -260,14 +260,14 @@ def get_disk_io_write_info(disk_dev):
 def get_disk_info(cache={}):
     if not cache.get('time') or time.time() - cache['time'] > 30:
         info = {}
-        cmd = "df | awk '$NF==\"/\" {printf $5}'"
+        cmd = "df -h | awk '$NF==\"/\" {printf \"%s / %s\", $5, $2}'"
         info['root'] = check_output(cmd)
         disks = get_disk_list('space_usage_mnt_points')
         for disk_mount, disk_dev in disks.items():
-            cmd = "df | awk '$NF==\"" + disk_mount + "\" {printf $5}'"
+            cmd = "df -h | awk '$NF==\"" + disk_mount + "\" {printf \"%s / %s\", $5, $2}'"
             disk_name = disk_mount.split('/')[-1]
             info[disk_name] = check_output(cmd)
-        cache['info'] = list(zip(*info.items()))
+        cache['info'] = info
         cache['time'] = time.time()
 
     return cache['info']

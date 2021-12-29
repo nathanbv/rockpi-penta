@@ -66,42 +66,22 @@ def turn_off():
     disp_clear()
 
 
-def put_disk_info():
-    k, v = misc.get_disk_info()
-    text1 = 'Disk: {} {}'.format(k[0], v[0])
+def put_disk_space_info(pages_len):
+    pages = {}
+    page_index = pages_len
+    disks_usage = misc.get_disk_info()
 
-    if len(k) == 5:
-        text2 = '{} {}  {} {}'.format(k[1], v[1], k[2], v[2])
-        text3 = '{} {}  {} {}'.format(k[3], v[3], k[4], v[4])
-        page = [
-            {'xy': (0, -2), 'text': text1, 'fill': 255, 'font': font['11']},
-            {'xy': (0, 10), 'text': text2, 'fill': 255, 'font': font['11']},
-            {'xy': (0, 21), 'text': text3, 'fill': 255, 'font': font['11']},
-        ]
-    elif len(k) == 4:
-        text2 = '{} {}  {} {}'.format(k[1], v[1], k[2], v[2])
-        text3 = '{} {}'.format(k[3], v[3])
-        page = [
-            {'xy': (0, -2), 'text': text1, 'fill': 255, 'font': font['11']},
-            {'xy': (0, 10), 'text': text2, 'fill': 255, 'font': font['11']},
-            {'xy': (0, 21), 'text': text3, 'fill': 255, 'font': font['11']},
-        ]
-    elif len(k) == 3:
-        text2 = '{} {}  {} {}'.format(k[1], v[1], k[2], v[2])
-        page = [
+    for disk_mount, disk_usage in disks_usage.items():
+        text1 = 'Disk {} usage:'.format(disk_mount)
+        text2 = '{}'.format(disk_usage)
+        pages[page_index] = [
             {'xy': (0, 2), 'text': text1, 'fill': 255, 'font': font['12']},
             {'xy': (0, 18), 'text': text2, 'fill': 255, 'font': font['12']},
         ]
-    elif len(k) == 2:
-        text2 = '{} {}'.format(k[1], v[1])
-        page = [
-            {'xy': (0, 2), 'text': text1, 'fill': 255, 'font': font['12']},
-            {'xy': (0, 18), 'text': text2, 'fill': 255, 'font': font['12']},
-        ]
-    else:
-        page = [{'xy': (0, 2), 'text': text1, 'fill': 255, 'font': font['14']}]
+        page_index = page_index + 1
 
-    return page
+    return pages
+
 
 def put_disk_temp_info(pages_len):
     page = {}
@@ -187,9 +167,9 @@ def gen_pages():
             {'xy': (0, 2), 'text': misc.get_info('cpu'), 'fill': 255, 'font': font['12']},
             {'xy': (0, 18), 'text': misc.get_info('mem'), 'fill': 255, 'font': font['12']},
         ],
-        2: put_disk_info()
     }
 
+    pages.update(put_disk_space_info(len(pages)))
     pages.update(put_disk_temp_info(len(pages)))
     pages.update(put_disk_io_info(len(pages)))
     pages.update(put_interface_info(len(pages)))
