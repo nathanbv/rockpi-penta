@@ -164,7 +164,7 @@ def gen_pages():
             {'xy': (0, 18), 'text': misc.get_info('ip'), 'fill': 255, 'font': font['12']},
         ],
         1: [
-            {'xy': (0, 2), 'text': misc.get_info('cpu'), 'fill': 255, 'font': font['12']},
+            {'xy': (0, 2), 'text': misc.get_cpu_load(), 'fill': 255, 'font': font['12']},
             {'xy': (0, 18), 'text': misc.get_info('mem'), 'fill': 255, 'font': font['12']},
         ],
         2: [
@@ -190,6 +190,7 @@ def slider(lock):
 
 
 def auto_slider(lock):
+    misc.get_cpu_load()
     while misc.conf['slider']['auto']:
         if misc.conf['show'].value == 1:
             slider(lock)

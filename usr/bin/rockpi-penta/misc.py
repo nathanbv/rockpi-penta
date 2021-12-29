@@ -13,7 +13,6 @@ cmds = {
     'up': "echo Up: $(uptime -p | sed 's/ years,/y/g;s/ year,/y/g;s/ months,/m/g;s/ month,/m/g;s/ weeks,/w/g;s/ week,/w/g;s/ days,/d/g;s/ day,/d/g;s/ hours,/h/g;s/ hour,/h/g;s/ minutes/m/g;s/ minute/m/g' | cut -d ' ' -f2-)",
     'temp': "cat /sys/class/thermal/thermal_zone0/temp",
     'ip': "hostname -I | awk '{printf \"IP %s\", $1}'",
-    'cpu': "uptime | awk '{printf \"CPU Load: %.2f\", $(NF-2)}'",
     'mem': "free | awk 'NR==2 {printf \"Mem: %d% / %.1fG\", $3/$2*100, $2/(1024*1024)}'"
 }
 
@@ -172,6 +171,16 @@ def watch_key(q=None):
 
     while True:
         q.put(read_key(pattern, size))
+
+
+def get_cpu_load():
+    avg_load_cmd = "uptime | awk '{print $(NF-2)}'"
+    avg_load = check_output(avg_load_cmd)
+    if avg_load[-1] == ',':
+        avg_load = avg_load[:-1]
+    cpu_count_cmd="grep -c processor /proc/cpuinfo"
+    cpu_count = check_output(cpu_count_cmd)
+    return "CPU Load: {:.0f}%".format(float(avg_load) / int(cpu_count) * 100)
 
 
 def get_interface_list():
