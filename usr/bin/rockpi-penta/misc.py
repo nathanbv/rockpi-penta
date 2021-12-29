@@ -14,7 +14,7 @@ cmds = {
     'temp': "cat /sys/class/thermal/thermal_zone0/temp",
     'ip': "hostname -I | awk '{printf \"IP %s\", $1}'",
     'cpu': "uptime | awk '{printf \"CPU Load: %.2f\", $(NF-2)}'",
-    'mem': "free -h | awk 'NR==2 {printf \"Mem: %s/%s\", $3,$2}'"
+    'mem': "free | awk 'NR==2 {printf \"Mem: %d% / %.1fG\", $3/$2*100, $2/(1024*1024)}'"
 }
 
 lv2dc = OrderedDict({
