@@ -59,6 +59,9 @@ def get_cpu_temp():
     return temp
 
 
+def get_fan_spin(dc):
+    return "Fan spin: {:.0f}%".format((1 - dc) * 100)
+
 def read_conf():
     conf = defaultdict(dict)
     cfg = ConfigParser()

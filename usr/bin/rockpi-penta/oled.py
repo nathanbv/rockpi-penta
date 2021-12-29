@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import fan
 import time
 import misc
 import Adafruit_SSD1306
@@ -159,13 +160,16 @@ def put_interface_info(pages_len):
 def gen_pages():
     pages = {
         0: [
-            {'xy': (0, -2), 'text': misc.get_info('up'), 'fill': 255, 'font': font['11']},
-            {'xy': (0, 10), 'text': misc.get_cpu_temp(), 'fill': 255, 'font': font['11']},
-            {'xy': (0, 21), 'text': misc.get_info('ip'), 'fill': 255, 'font': font['11']},
+            {'xy': (0, 2), 'text': misc.get_info('up'), 'fill': 255, 'font': font['12']},
+            {'xy': (0, 18), 'text': misc.get_info('ip'), 'fill': 255, 'font': font['12']},
         ],
         1: [
             {'xy': (0, 2), 'text': misc.get_info('cpu'), 'fill': 255, 'font': font['12']},
             {'xy': (0, 18), 'text': misc.get_info('mem'), 'fill': 255, 'font': font['12']},
+        ],
+        2: [
+            {'xy': (0, 2), 'text': misc.get_cpu_temp(), 'fill': 255, 'font': font['12']},
+            {'xy': (0, 18), 'text': misc.get_fan_spin(fan.get_dc()), 'fill': 255, 'font': font['12']},
         ],
     }
 
