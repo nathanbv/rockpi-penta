@@ -38,10 +38,12 @@ def set_mode(pin, mode=1):
 
 
 def check_output(cmd):
+    print("Getting output from command:", cmd)
     return subprocess.check_output(cmd, shell=True).decode().strip()
 
 
 def check_call(cmd):
+    print("Calling command:", cmd)
     return subprocess.check_call(cmd, shell=True)
 
 
@@ -64,11 +66,11 @@ def get_fan_spin(dc):
 def read_conf():
     conf = defaultdict(dict)
     cfg = ConfigParser()
-    cfg.read('/etc/rockpi-penta.conf')
+    cfg.read('./rockpi-penta.conf')
 
     # fan
     try:
-        # Reverse compativility for old configs
+        # Reverse compatibility for old configs
         # If none of the new value are founf in the cfg
         if bool(set(['lv4', 'lv5', 'lv6', 'lv7']) & set(cfg['fan'].keys())) == False:
             conf['fan']['lv0'] = cfg.getfloat('fan','lv0')
@@ -143,6 +145,7 @@ def read_conf():
         conf['network']['interfaces'] = cfg.get('network','interfaces').split('|')
     except Exception:
         conf['network']['interfaces'] = []
+    print(conf)
 
     return conf
 
@@ -154,6 +157,9 @@ def read_key(pattern, size):
 
     while True:
         s = s[-size:] + str(pin11.read())
+        # For some reason we never receive any event...
+        # Is my button dead ? Has the pin number changed ?
+        print(s)
         for t, p in pattern.items():
             if p.match(s):
                 return t
@@ -178,9 +184,10 @@ def get_cpu_load():
     avg_load = check_output(avg_load_cmd)
     if avg_load[-1] == ',':
         avg_load = avg_load[:-1]
-    cpu_count_cmd="grep -c processor /proc/cpuinfo"
-    cpu_count = check_output(cpu_count_cmd)
-    return "CPU Load: {:.0f}%".format(float(avg_load) / int(cpu_count) * 100)
+    # cpu_count_cmd="grep -c processor /proc/cpuinfo"
+    # cpu_count = check_output(cpu_count_cmd)
+    # return "CPU Load: {:.0f}%".format(float(avg_load) / int(cpu_count) * 100)
+    return "CPU Load: {:.0f}%".format(float(avg_load) * 100)
 
 
 def get_interface_list():
@@ -235,7 +242,7 @@ def get_disk_list(type):
 def get_disk_temp_info():
     if not conf['disk']['disks_temp']:
         return [(), ()]
-    disks = set(check_output("ls /dev/sd* | grep -E \"[0-9]*$\" | cut -f3 -d'/' | tr -d '0123456789'").split("\n"))
+    disks = set(check_output("ls /dev/sd* | grep -E \"[0-9]*$\" | cut -f3 -d'/' | tr -d '0123456789' | sort -u | uniq").split("\n"))
     disks_temp = {}
     for disk in disks:
         cmd = "sudo smartctl -A /dev/" + disk + " | awk '$2==\"Temperature_Celsius\" {printf $4}' | awk '$0*=1'"
@@ -290,10 +297,6 @@ def slider_next(pages):
     return pages[conf['idx'].value % len(pages)]
 
 
-def slider_sleep():
-    time.sleep(conf['slider']['time'])
-
-
 def fan_temp2dc(t):
     for lv, dc in lv2dc.items():
         if t >= conf['fan'][lv]:
@@ -302,6 +305,7 @@ def fan_temp2dc(t):
 
 
 def fan_switch():
+    print("Turning fan on/off")
     conf['run'].value = not(conf['run'].value)
 
 
@@ -326,8 +330,10 @@ def open_pwm_i2c():
     replace('/boot/hw_intfc.conf', 'intfc:i2c7=off', 'intfc:i2c7=on')
 
 
-conf = {'disk': [], 'idx': mp.Value('d', -1), 'run': mp.Value('d', 1), 'show': mp.Value('d', 1)}
+conf = {'disk': [], 'idx': -1, 'run': 1, 'show': 1}
+print(conf)
 conf.update(read_conf())
+print(conf)
 if "displayoff" in conf['key'].values():
     conf['show'].value = 0
 

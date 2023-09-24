@@ -49,10 +49,12 @@ def disp_clear():
 
 
 def welcome():
-    disp_clear()
+    # disp_clear()
+    print("Welcome screen")
     draw.text((0, 0), 'ROCK Pi SATA HAT', font=font['14'], fill=255)
     draw.text((32, 16), 'loading...', font=font['12'], fill=255)
     disp_show()
+    time.sleep(2)
 
 
 def goodbye():
@@ -63,6 +65,7 @@ def goodbye():
 
 
 def turn_off():
+    print("Turning off screen")
     misc.conf['show'].value = 0
     disp_clear()
 
@@ -181,23 +184,9 @@ def gen_pages():
     return pages
 
 
-def slider(lock):
-    with lock:
-        misc.conf['show'].value = 1
-        for item in misc.slider_next(gen_pages()):
-            draw.text(**item)
-        disp_show()
-
-
-def auto_slider(lock):
-    misc.get_cpu_load()
-    while misc.conf['slider']['auto']:
-        if misc.conf['show'].value == 1:
-            slider(lock)
-        else:
-            disp_clear()
-        misc.slider_sleep()
-    if misc.conf['show'].value == 1:
-        slider(lock)
-    else:
-        disp_clear()
+def slider():
+    print("Changing screen")
+    misc.conf['show'].value = 1
+    for item in misc.slider_next(gen_pages()):
+        draw.text(**item)
+    disp_show()
