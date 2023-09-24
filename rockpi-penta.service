@@ -1,0 +1,21 @@
+[Unit]
+Description=Rockpi SATA Hat
+Documentation=https://github.com/nathanbv/rockpi-penta
+
+[Service]
+User=%INSTALL_TARGET_USER%
+Group=%INSTALL_TARGET_USER%
+
+Type=simple
+
+ExecStart=/usr/bin/python3 "%DEST_PATH%/main.py" on
+ExecStop=/usr/bin/python3 "%DEST_PATH%/main.py" off
+WorkingDirectory=%DEST_PATH%
+
+Restart=on-failure
+
+StandardOutput=append:%LOG_PATH%/output.log
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target

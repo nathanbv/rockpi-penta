@@ -1,21 +1,14 @@
 # ROCK Pi Penta SATA
 
-[Penta SATA HAT](<https://wiki.radxa.com/Penta_SATA_HAT>) for ROCK Pi 4B
-
-![penta-hat](https://cos.setf.me/assets/images/penta-sata-hat.png)
-
-Build the package
-=================
-
-```bash
-dpkg-deb --build --root-owner-group rockpi-penta
+## Install
+A systemd service file is provided to easily install and run the script. And to
+easily install the service a script is also provided!
+```shell
+sudo ./install.sh
+# You can configure your installation with (see default values in install.sh):
+sudo \
+  INSTALL_TARGET_USER="${USER}" \
+  DEST_PATH="${HOME}/bin/hat/" \
+  LOG_PATH="${HOME}/bin/hat/logs/" \
+  ./install.sh
 ```
-
-Install the package
-===================
-
-```bash
-sudo dpkg -i rockpi-penta.deb
-```
-
-
