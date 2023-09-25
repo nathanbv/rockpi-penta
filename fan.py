@@ -15,9 +15,6 @@ def read_temp():
 
 
 def get_dc(cache={}):
-    if misc.conf['run'].value == 0:
-        return 0.999
-
     if time.time() - cache.get('time', 0) > 60:
         cache['time'] = time.time()
         cache['dc'] = misc.fan_temp2dc(read_temp())
@@ -30,6 +27,8 @@ def change_dc(dc, cache={}):
         cache['dc'] = dc
         pin13.write(dc)
 
+def turn_off():
+    pin13.write(0.999)
 
 def running():
     while True:
